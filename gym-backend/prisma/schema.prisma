@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id            String         @id @default(uuid())
+  email         String?         @unique
+  password      String?
+  name          String
+  lastName      String
+  dni           String         @unique
+  birthDate     DateTime?
+  phone         String         @unique
+  role          Role          @default(USER)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  enrollment    Enrollment?   
+}
+
+model Enrollment {
+  id            String           @id @default(uuid())
+  userId        String          @unique  
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modality      Modality?
+  startDate     DateTime?
+  endDate       DateTime?
+  comments      String?
+  weeklyAccesses Int             @default(0)
+  lastAccessReset DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  payments      Payment[]
+  accesses      Access[]
+
+  @@index([userId])
+}
+
+model Access {
+  id            String         @id @default(uuid())
+  enrollmentId  String
+  enrollment    Enrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  accessDate    DateTime       @default(now())
+  status        AccessStatus   @default(GRANTED)
+  deniedReason  String?
+}
+
+model Payment {
+  id            String         @id @default(uuid())
+  enrollmentId  String
+  enrollment    Enrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  modality      Modality       @default(FREE)
+  amount        Float
+  currency      Currency       @default(ARS)
+  startDate     DateTime
+  endDate       DateTime
+  comments      String?
+  discount      Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  USER
+}
+
+enum Currency {
+  ARS
+  USD
+}
+
+enum Modality {
+  FREE
+  THREE
+  TWO
+}
+
+enum AccessStatus {
+  GRANTED
+  DENIED
+} 
